@@ -30,7 +30,7 @@ const FinancialValuationTool = () => {
       // 2. Yahoo Finance API alternatives
       // 3. SEC EDGAR API for official filings
       
-      const response = await fetch(`https://financialmodelingprep.com/api/v3/income-statement/${ticker.toUpperCase()}?period=annual&limit=5&apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const response = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/income-statement/${ticker.toUpperCase()}`);
       const incomeData = await response.json();
       
       if (!incomeData || incomeData.length === 0) {
@@ -38,15 +38,15 @@ const FinancialValuationTool = () => {
       }
 
       // Fetch balance sheet for working capital
-      const bsResponse = await fetch(`https://financialmodelingprep.com/api/v3/balance-sheet-statement/${ticker.toUpperCase()}?period=annual&limit=5&apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const bsResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/balance-sheet-statement/${ticker.toUpperCase()}`);
       const balanceData = await bsResponse.json();
 
       // Fetch cash flow statement
-      const cfResponse = await fetch(`https://financialmodelingprep.com/api/v3/cash-flow-statement/${ticker.toUpperCase()}?period=annual&limit=5&apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const cfResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/cash-flow-statement/${ticker.toUpperCase()}`);
       const cashFlowData = await cfResponse.json();
 
       // Fetch company profile for shares outstanding and current price
-      const profileResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/${ticker.toUpperCase()}?apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const profileResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/profile/${ticker.toUpperCase()}`);
       const profileData = await profileResponse.json();
 
       // Process the data
@@ -259,10 +259,10 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
     
     setLoading(true);
     try {
-      const response = await fetch(`https://financialmodelingprep.com/api/v3/income-statement/${compTicker.toUpperCase()}?period=annual&limit=1&apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const response = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/income-statement/${compTicker.toUpperCase()}`);
       const incomeData = await response.json();
       
-      const profileResponse = await fetch(`https://financialmodelingprep.com/api/v3/profile/${compTicker.toUpperCase()}?apikey=sWgGKSun1x14tVuc5vAQqv3VlasoTJqX`);
+      const profileResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/profile/${compTicker.toUpperCase()}`);
       const profileData = await profileResponse.json();
 
       if (incomeData && incomeData.length > 0 && profileData && profileData.length > 0) {
