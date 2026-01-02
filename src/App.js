@@ -30,7 +30,7 @@ const FinancialValuationTool = () => {
       // 2. Yahoo Finance API alternatives
       // 3. SEC EDGAR API for official filings
       
-      const response = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/income-statement/${ticker.toUpperCase()}`);
+      const response = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/income-statement/${ticker.toUpperCase()}`);
       const incomeData = await response.json();
       
       if (!incomeData || incomeData.length === 0) {
@@ -38,15 +38,15 @@ const FinancialValuationTool = () => {
       }
 
       // Fetch balance sheet for working capital
-      const bsResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/balance-sheet-statement/${ticker.toUpperCase()}`);
+      const bsResponse = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/balance-sheet/${ticker.toUpperCase()}`);
       const balanceData = await bsResponse.json();
 
       // Fetch cash flow statement
-      const cfResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/cash-flow-statement/${ticker.toUpperCase()}`);
+      const cfResponse = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/cash-flow/${ticker.toUpperCase()}`);
       const cashFlowData = await cfResponse.json();
 
       // Fetch company profile for shares outstanding and current price
-      const profileResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/profile/${ticker.toUpperCase()}`);
+      const profileResponse = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/profile/${ticker.toUpperCase()}`);
       const profileData = await profileResponse.json();
 
       // Process the data
@@ -123,7 +123,7 @@ const FinancialValuationTool = () => {
         `${f.year}: Revenue $${f.revenue.toFixed(0)}M (YoY: ${f.year > company.financials[0].year ? ((f.revenue / company.financials[company.financials.findIndex(x => x.year === f.year - 1)]?.revenue - 1) * 100).toFixed(1) : 'N/A'}%), EBITDA Margin: ${(f.ebitda / f.revenue * 100).toFixed(1)}%`
       ).join('; ');
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('https://financial-valuation-backend-ebwf.onrender.com/api/ai-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ Consider: historical growth trends, industry characteristics, margin sustainabil
         `${f.year}: Rev $${f.revenue.toFixed(0)}M, COGS $${f.cogs.toFixed(0)}M, OpEx $${f.opex.toFixed(0)}M (R&D: $${f.rdExpense.toFixed(0)}M, SG&A: $${f.sgaExpense.toFixed(0)}M), EBITDA $${f.ebitda.toFixed(0)}M, FCF $${f.fcf.toFixed(0)}M`
       ).join('; ');
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('https://financial-valuation-backend-ebwf.onrender.com/api/ai-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -259,10 +259,10 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
     
     setLoading(true);
     try {
-      const response = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/income-statement/${compTicker.toUpperCase()}`);
+      const response = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/income-statement/${compTicker.toUpperCase()}`);
       const incomeData = await response.json();
       
-      const profileResponse = await fetch(`https://financial-valuation-backend-production.up.railway.app/api/profile/${compTicker.toUpperCase()}`);
+      const profileResponse = await fetch(`https://financial-valuation-backend-ebwf.onrender.com/api/profile/${compTicker.toUpperCase()}`);
       const profileData = await profileResponse.json();
 
       if (incomeData && incomeData.length > 0 && profileData && profileData.length > 0) {
