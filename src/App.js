@@ -2,6 +2,65 @@ import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Search, Upload, TrendingUp, DollarSign, Calculator, FileText, Download, Loader } from 'lucide-react';
 
+// Currency formatting utilities
+const formatCurrency = (value, decimals = 0, showSign = true) => {
+  if (value === null || value === undefined || isNaN(value)) return showSign ? '$0' : '0';
+  const sign = showSign ? '$' : '';
+  return sign + Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
+
+const formatNumber = (value, decimals = 0) => {
+  if (value === null || value === undefined || isNaN(value)) return '0';
+  return Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+};
+
+const formatPercent = (value, decimals = 1) => {
+  if (value === null || value === undefined || isNaN(value)) return '0.0%';
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }) + '%';
+};
+
+// Custom tooltip formatter for charts
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-300 rounded-lg shadow-lg">
+        <p className="font-semibold mb-2">{`Year ${label}`}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {`${entry.name}: ${formatCurrency(entry.value, 0)}`}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+const MarginTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-300 rounded-lg shadow-lg">
+        <p className="font-semibold mb-2">{`Year ${label}`}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {`${entry.name}: ${formatPercent(entry.value)}`}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 const FinancialValuationTool = () => {
   const [activeTab, setActiveTab] = useState('search');
   const [ticker, setTicker] = useState('');
@@ -505,9 +564,9 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
   const sensitivityData = dcfResults ? generateSensitivity() : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto">
-        <header className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <header className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -519,7 +578,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
             {companyData && (
               <button
                 onClick={exportToExcel}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                className="px-5 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 flex items-center gap-2 font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
               >
                 <Download className="w-4 h-4" />
                 Export to Excel
@@ -529,37 +588,53 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
         </header>
 
         {/* Navigation Tabs */}
-        <div className="bg-white rounded-lg shadow-sm mb-6">
-          <div className="flex border-b">
+        <div className="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
+          <div className="flex border-b border-gray-200">
             <button
               onClick={() => setActiveTab('search')}
-              className={`px-6 py-3 font-medium ${activeTab === 'search' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+              className={`px-6 py-3.5 font-medium transition-all duration-200 flex items-center gap-2 ${
+                activeTab === 'search' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
             >
-              <Search className="inline mr-2 w-4 h-4" />
+              <Search className="w-4 h-4" />
               Company Search
             </button>
             <button
               onClick={() => setActiveTab('financials')}
-              className={`px-6 py-3 font-medium ${activeTab === 'financials' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+              className={`px-6 py-3.5 font-medium transition-all duration-200 flex items-center gap-2 ${
+                activeTab === 'financials' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              } ${!companyData ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!companyData}
             >
-              <FileText className="inline mr-2 w-4 h-4" />
+              <FileText className="w-4 h-4" />
               Financials
             </button>
             <button
               onClick={() => setActiveTab('dcf')}
-              className={`px-6 py-3 font-medium ${activeTab === 'dcf' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+              className={`px-6 py-3.5 font-medium transition-all duration-200 flex items-center gap-2 ${
+                activeTab === 'dcf' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              } ${!companyData ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!companyData}
             >
-              <Calculator className="inline mr-2 w-4 h-4" />
+              <Calculator className="w-4 h-4" />
               DCF Model
             </button>
             <button
               onClick={() => setActiveTab('comps')}
-              className={`px-6 py-3 font-medium ${activeTab === 'comps' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
+              className={`px-6 py-3.5 font-medium transition-all duration-200 flex items-center gap-2 ${
+                activeTab === 'comps' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              } ${!companyData ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={!companyData}
             >
-              <DollarSign className="inline mr-2 w-4 h-4" />
+              <DollarSign className="w-4 h-4" />
               Comps Analysis
             </button>
           </div>
@@ -567,7 +642,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
 
         {/* Company Search Tab */}
         {activeTab === 'search' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
             <h2 className="text-xl font-semibold mb-4">Search Public Company</h2>
             <div className="flex gap-4 mb-6">
               <input
@@ -575,13 +650,13 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                 placeholder="Enter ticker symbol (e.g., AAPL, MSFT, GOOGL)"
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                 onKeyPress={(e) => e.key === 'Enter' && fetchCompanyData()}
               />
               <button
                 onClick={fetchCompanyData}
                 disabled={!ticker || loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed flex items-center gap-2 font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:shadow-none"
               >
                 {loading ? (
                   <>
@@ -589,7 +664,10 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     Loading...
                   </>
                 ) : (
-                  'Fetch Data'
+                  <>
+                    <Search className="w-4 h-4" />
+                    Fetch Data
+                  </>
                 )}
               </button>
             </div>
@@ -610,7 +688,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
             </div>
 
             {companyData && (
-              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="mt-6 p-5 bg-gradient-to-r from-green-50 to-green-100 border border-green-300 rounded-xl shadow-sm">
                 <h3 className="font-semibold text-green-900">✓ Data Loaded Successfully</h3>
                 <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -623,15 +701,15 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   </div>
                   <div>
                     <span className="text-gray-600">Current Price:</span>
-                    <span className="ml-2 font-semibold">${companyData.currentPrice.toFixed(2)}</span>
+                    <span className="ml-2 font-semibold">{formatCurrency(companyData.currentPrice, 2)}</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Shares Outstanding:</span>
-                    <span className="ml-2 font-semibold">{companyData.sharesOutstanding.toFixed(1)}M</span>
+                    <span className="ml-2 font-semibold">{formatNumber(companyData.sharesOutstanding, 1)}M</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Market Cap:</span>
-                    <span className="ml-2 font-semibold">${companyData.marketCap.toFixed(0)}M</span>
+                    <span className="ml-2 font-semibold">{formatCurrency(companyData.marketCap, 0)}M</span>
                   </div>
                   <div>
                     <span className="text-gray-600">Years of Data:</span>
@@ -649,13 +727,13 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
         {/* Financials Tab */}
         {activeTab === 'financials' && companyData && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Historical Financials - {companyData.name}</h2>
                 <button
                   onClick={generateDetailedInsights}
                   disabled={loadingAI}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm flex items-center gap-2 disabled:bg-gray-400"
+                  className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 text-sm flex items-center gap-2 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none"
                 >
                   {loadingAI ? (
                     <>
@@ -682,67 +760,67 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium">Revenue</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3">${f.revenue.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-mono">{formatCurrency(f.revenue, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium">COGS</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3">${f.cogs.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-mono">{formatCurrency(f.cogs, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50 bg-blue-50">
                       <td className="p-3 font-medium">Gross Profit</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 font-semibold">${f.grossProfit.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(f.grossProfit, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium pl-6">↳ R&D Expense</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 text-gray-600">${f.rdExpense.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 text-gray-600 font-mono">{formatCurrency(f.rdExpense, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium pl-6">↳ SG&A Expense</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 text-gray-600">${f.sgaExpense.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 text-gray-600 font-mono">{formatCurrency(f.sgaExpense, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium">Total OpEx</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3">${f.opex.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-mono">{formatCurrency(f.opex, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50 bg-green-50">
                       <td className="p-3 font-medium">EBITDA</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 font-semibold">${f.ebitda.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(f.ebitda, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium">CapEx</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3">${f.capex.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-mono">{formatCurrency(f.capex, 0)}</td>
                       ))}
                     </tr>
                     <tr className="hover:bg-gray-50 bg-purple-50">
                       <td className="p-3 font-medium">Free Cash Flow</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 font-bold">${f.fcf.toFixed(0)}</td>
+                        <td key={f.year} className="text-right p-3 font-bold font-mono">{formatCurrency(f.fcf, 0)}</td>
                       ))}
                     </tr>
                     <tr className="border-t-2">
                       <td className="p-3 font-medium text-gray-600">EBITDA Margin %</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 text-gray-600">{(f.ebitda / f.revenue * 100).toFixed(1)}%</td>
+                        <td key={f.year} className="text-right p-3 text-gray-600">{formatPercent(f.ebitda / f.revenue * 100)}</td>
                       ))}
                     </tr>
                     <tr>
                       <td className="p-3 font-medium text-gray-600">FCF Margin %</td>
                       {companyData.financials.map(f => (
-                        <td key={f.year} className="text-right p-3 text-gray-600">{(f.fcf / f.revenue * 100).toFixed(1)}%</td>
+                        <td key={f.year} className="text-right p-3 text-gray-600">{formatPercent(f.fcf / f.revenue * 100)}</td>
                       ))}
                     </tr>
                   </tbody>
@@ -752,14 +830,14 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
 
             {/* Charts */}
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4">Revenue & EBITDA Trend</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={companyData.financials}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => formatCurrency(value, 0, false) + 'M'} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Revenue" />
                     <Line type="monotone" dataKey="ebitda" stroke="#10b981" strokeWidth={2} name="EBITDA" />
@@ -767,28 +845,28 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4">Free Cash Flow</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={companyData.financials}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => formatCurrency(value, 0, false) + 'M'} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    <Bar dataKey="fcf" fill="#8b5cf6" name="FCF ($M)" />
+                    <Bar dataKey="fcf" fill="#8b5cf6" name="FCF" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4">Operating Expense Breakdown</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={companyData.financials}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => formatCurrency(value, 0, false) + 'M'} />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
                     <Bar dataKey="rdExpense" stackId="a" fill="#3b82f6" name="R&D" />
                     <Bar dataKey="sgaExpense" stackId="a" fill="#10b981" name="SG&A" />
@@ -796,7 +874,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4">Margin Trends</h3>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={companyData.financials.map(f => ({
@@ -806,11 +884,11 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   }))}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="year" />
-                    <YAxis />
-                    <Tooltip />
+                    <YAxis tickFormatter={(value) => value + '%'} />
+                    <Tooltip content={<MarginTooltip />} />
                     <Legend />
-                    <Line type="monotone" dataKey="ebitdaMargin" stroke="#f59e0b" strokeWidth={2} name="EBITDA Margin %" />
-                    <Line type="monotone" dataKey="fcfMargin" stroke="#8b5cf6" strokeWidth={2} name="FCF Margin %" />
+                    <Line type="monotone" dataKey="ebitdaMargin" stroke="#f59e0b" strokeWidth={2} name="EBITDA Margin" />
+                    <Line type="monotone" dataKey="fcfMargin" stroke="#8b5cf6" strokeWidth={2} name="FCF Margin" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -818,7 +896,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
 
             {/* AI Insights */}
             {aiInsight && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <span className="text-purple-600">🤖</span> AI-Powered Financial Analysis
                 </h3>
@@ -845,7 +923,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
             </div>
 
             {/* Assumptions Panel */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <h2 className="text-xl font-semibold mb-4">DCF Assumptions</h2>
               <div className="grid grid-cols-3 gap-6">
                 <div>
@@ -854,31 +932,31 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     type="number"
                     value={dcfAssumptions.wacc}
                     onChange={(e) => setDcfAssumptions({...dcfAssumptions, wacc: parseFloat(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
                     step="0.1"
                   />
                   <p className="text-xs text-gray-500 mt-1">Weighted avg cost of capital</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Terminal Growth Rate (%)</label>
-                  <input
-                    type="number"
-                    value={dcfAssumptions.terminalGrowth}
-                    onChange={(e) => setDcfAssumptions({...dcfAssumptions, terminalGrowth: parseFloat(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    step="0.1"
-                  />
+                    <input
+                      type="number"
+                      value={dcfAssumptions.terminalGrowth}
+                      onChange={(e) => setDcfAssumptions({...dcfAssumptions, terminalGrowth: parseFloat(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
+                      step="0.1"
+                    />
                   <p className="text-xs text-gray-500 mt-1">Perpetual growth rate</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Exit Multiple (EV/EBITDA)</label>
-                  <input
-                    type="number"
-                    value={dcfAssumptions.exitMultiple}
-                    onChange={(e) => setDcfAssumptions({...dcfAssumptions, exitMultiple: parseFloat(e.target.value)})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    step="0.1"
-                  />
+                    <input
+                      type="number"
+                      value={dcfAssumptions.exitMultiple}
+                      onChange={(e) => setDcfAssumptions({...dcfAssumptions, exitMultiple: parseFloat(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
+                      step="0.1"
+                    />
                   <p className="text-xs text-gray-500 mt-1">Terminal valuation multiple</p>
                 </div>
               </div>
@@ -897,7 +975,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                           newRates[idx] = parseFloat(e.target.value);
                           setDcfAssumptions({...dcfAssumptions, revenueGrowth: newRates});
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
                         step="0.1"
                       />
                     </div>
@@ -911,14 +989,14 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   type="number"
                   value={dcfAssumptions.sharesOutstanding}
                   onChange={(e) => setDcfAssumptions({...dcfAssumptions, sharesOutstanding: parseFloat(e.target.value)})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm"
                 />
                 <p className="text-xs text-gray-500 mt-1">Auto-fetched from market data</p>
               </div>
             </div>
 
             {/* Projected P&L and Cash Flow Statement */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <h3 className="text-lg font-semibold mb-4">5-Year Projected P&L and Free Cash Flow</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -935,107 +1013,107 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white">Revenue</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3">${proj.revenue.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-mono">{formatCurrency(proj.revenue, 0)}</td>
                       ))}
-                      <td className="text-right p-3 bg-purple-50">${dcfResults.terminalProjection.revenue.toFixed(0)}</td>
+                      <td className="text-right p-3 bg-purple-50 font-mono">{formatCurrency(dcfResults.terminalProjection.revenue, 0)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white">COGS</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3">$({proj.cogs.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 font-mono">({formatCurrency(proj.cogs, 0)})</td>
                       ))}
-                      <td className="text-right p-3 bg-purple-50">$({dcfResults.terminalProjection.cogs.toFixed(0)})</td>
+                      <td className="text-right p-3 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.cogs, 0)})</td>
                     </tr>
                     <tr className="hover:bg-gray-50 bg-blue-50">
                       <td className="p-3 font-semibold sticky left-0 bg-blue-50">Gross Profit</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 font-semibold">${proj.grossProfit.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(proj.grossProfit, 0)}</td>
                       ))}
-                      <td className="text-right p-3 font-semibold bg-purple-100">${dcfResults.terminalProjection.grossProfit.toFixed(0)}</td>
+                      <td className="text-right p-3 font-semibold bg-purple-100 font-mono">{formatCurrency(dcfResults.terminalProjection.grossProfit, 0)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white">Operating Expenses</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3">$({proj.opex.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 font-mono">({formatCurrency(proj.opex, 0)})</td>
                       ))}
-                      <td className="text-right p-3 bg-purple-50">$({dcfResults.terminalProjection.opex.toFixed(0)})</td>
+                      <td className="text-right p-3 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.opex, 0)})</td>
                     </tr>
                     <tr className="hover:bg-gray-50 bg-green-50">
                       <td className="p-3 font-semibold sticky left-0 bg-green-50">EBITDA</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 font-semibold">${proj.ebitda.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(proj.ebitda, 0)}</td>
                       ))}
-                      <td className="text-right p-3 font-semibold bg-purple-100">${dcfResults.terminalProjection.ebitda.toFixed(0)}</td>
+                      <td className="text-right p-3 font-semibold bg-purple-100 font-mono">{formatCurrency(dcfResults.terminalProjection.ebitda, 0)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white">Depreciation & Amortization</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3">$({proj.da.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 font-mono">({formatCurrency(proj.da, 0)})</td>
                       ))}
-                      <td className="text-right p-3 bg-purple-50">$({dcfResults.terminalProjection.da.toFixed(0)})</td>
+                      <td className="text-right p-3 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.da, 0)})</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-semibold sticky left-0 bg-white">EBIT</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 font-semibold">${proj.ebit.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(proj.ebit, 0)}</td>
                       ))}
-                      <td className="text-right p-3 font-semibold bg-purple-50">${dcfResults.terminalProjection.ebit.toFixed(0)}</td>
+                      <td className="text-right p-3 font-semibold bg-purple-50 font-mono">{formatCurrency(dcfResults.terminalProjection.ebit, 0)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white">Taxes (25%)</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3">$({proj.tax.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 font-mono">({formatCurrency(proj.tax, 0)})</td>
                       ))}
-                      <td className="text-right p-3 bg-purple-50">$({dcfResults.terminalProjection.tax.toFixed(0)})</td>
+                      <td className="text-right p-3 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.tax, 0)})</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-semibold sticky left-0 bg-white">NOPAT</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 font-semibold">${proj.nopat.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-semibold font-mono">{formatCurrency(proj.nopat, 0)}</td>
                       ))}
-                      <td className="text-right p-3 font-semibold bg-purple-50">${dcfResults.terminalProjection.nopat.toFixed(0)}</td>
+                      <td className="text-right p-3 font-semibold bg-purple-50 font-mono">{formatCurrency(dcfResults.terminalProjection.nopat, 0)}</td>
                     </tr>
                     <tr className="border-t-2 border-gray-300">
                       <td className="p-3 font-medium sticky left-0 bg-white text-gray-600">Add: D&A</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 text-gray-600">${proj.da.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 text-gray-600 font-mono">{formatCurrency(proj.da, 0)}</td>
                       ))}
-                      <td className="text-right p-3 text-gray-600 bg-purple-50">${dcfResults.terminalProjection.da.toFixed(0)}</td>
+                      <td className="text-right p-3 text-gray-600 bg-purple-50 font-mono">{formatCurrency(dcfResults.terminalProjection.da, 0)}</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white text-gray-600">Less: CapEx</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 text-gray-600">$({proj.capex.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 text-gray-600 font-mono">({formatCurrency(proj.capex, 0)})</td>
                       ))}
-                      <td className="text-right p-3 text-gray-600 bg-purple-50">$({dcfResults.terminalProjection.capex.toFixed(0)})</td>
+                      <td className="text-right p-3 text-gray-600 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.capex, 0)})</td>
                     </tr>
                     <tr className="hover:bg-gray-50">
                       <td className="p-3 font-medium sticky left-0 bg-white text-gray-600">Less: Change in NWC</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 text-gray-600">$({proj.nwcChange.toFixed(0)})</td>
+                        <td key={proj.year} className="text-right p-3 text-gray-600 font-mono">({formatCurrency(proj.nwcChange, 0)})</td>
                       ))}
-                      <td className="text-right p-3 text-gray-600 bg-purple-50">$({dcfResults.terminalProjection.nwcChange.toFixed(0)})</td>
+                      <td className="text-right p-3 text-gray-600 bg-purple-50 font-mono">({formatCurrency(dcfResults.terminalProjection.nwcChange, 0)})</td>
                     </tr>
                     <tr className="bg-purple-100 border-t-2 border-purple-300">
                       <td className="p-3 font-bold sticky left-0 bg-purple-100">Free Cash Flow</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 font-bold">${proj.fcf.toFixed(0)}</td>
+                        <td key={proj.year} className="text-right p-3 font-bold font-mono">{formatCurrency(proj.fcf, 0)}</td>
                       ))}
-                      <td className="text-right p-3 font-bold bg-purple-200">${dcfResults.terminalProjection.fcf.toFixed(0)}</td>
+                      <td className="text-right p-3 font-bold bg-purple-200 font-mono">{formatCurrency(dcfResults.terminalProjection.fcf, 0)}</td>
                     </tr>
                     <tr className="border-t">
                       <td className="p-3 text-sm text-gray-600 sticky left-0 bg-white">EBITDA Margin %</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 text-sm text-gray-600">{(proj.ebitda / proj.revenue * 100).toFixed(1)}%</td>
+                        <td key={proj.year} className="text-right p-3 text-sm text-gray-600">{formatPercent(proj.ebitda / proj.revenue * 100)}</td>
                       ))}
-                      <td className="text-right p-3 text-sm text-gray-600 bg-purple-50">{(dcfResults.terminalProjection.ebitda / dcfResults.terminalProjection.revenue * 100).toFixed(1)}%</td>
+                      <td className="text-right p-3 text-sm text-gray-600 bg-purple-50">{formatPercent(dcfResults.terminalProjection.ebitda / dcfResults.terminalProjection.revenue * 100)}</td>
                     </tr>
                     <tr>
                       <td className="p-3 text-sm text-gray-600 sticky left-0 bg-white">FCF Margin %</td>
                       {dcfResults.fullProjections.map(proj => (
-                        <td key={proj.year} className="text-right p-3 text-sm text-gray-600">{(proj.fcf / proj.revenue * 100).toFixed(1)}%</td>
+                        <td key={proj.year} className="text-right p-3 text-sm text-gray-600">{formatPercent(proj.fcf / proj.revenue * 100)}</td>
                       ))}
-                      <td className="text-right p-3 text-sm text-gray-600 bg-purple-50">{(dcfResults.terminalProjection.fcf / dcfResults.terminalProjection.revenue * 100).toFixed(1)}%</td>
+                      <td className="text-right p-3 text-sm text-gray-600 bg-purple-50">{formatPercent(dcfResults.terminalProjection.fcf / dcfResults.terminalProjection.revenue * 100)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1043,7 +1121,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
             </div>
 
             {/* Cash Flow Projections */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <h3 className="text-lg font-semibold mb-4">Present Value Calculation</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -1059,14 +1137,14 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     {dcfResults.projections.map((proj, idx) => (
                       <tr key={idx} className="hover:bg-gray-50">
                         <td className="p-3">Year {idx + 1}</td>
-                        <td className="text-right p-3">${proj.fcf.toFixed(1)}</td>
+                        <td className="text-right p-3 font-mono">{formatCurrency(proj.fcf, 1)}</td>
                         <td className="text-right p-3">{(1 / Math.pow(1 + dcfAssumptions.wacc / 100, idx + 1)).toFixed(3)}</td>
-                        <td className="text-right p-3">${proj.pv.toFixed(1)}</td>
+                        <td className="text-right p-3 font-mono">{formatCurrency(proj.pv, 1)}</td>
                       </tr>
                     ))}
                     <tr className="bg-blue-50 font-semibold border-t-2">
                       <td className="p-3" colSpan="3">Sum of PV (5-Year Forecast)</td>
-                      <td className="text-right p-3">${dcfResults.pvForecast.toFixed(1)}</td>
+                      <td className="text-right p-3 font-mono">{formatCurrency(dcfResults.pvForecast, 1)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1075,20 +1153,20 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
 
             {/* Terminal Value Calculations */}
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold mb-4">Terminal Value - Exit Multiple Method</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Terminal Year EBITDA</span>
-                    <span>${dcfResults.terminalProjection.ebitda.toFixed(1)}M</span>
+                    <span className="font-mono">{formatCurrency(dcfResults.terminalProjection.ebitda, 1)}M</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Exit Multiple (EV/EBITDA)</span>
-                    <span>{dcfAssumptions.exitMultiple}x</span>
+                    <span className="font-semibold">{dcfAssumptions.exitMultiple}x</span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
                     <span className="text-gray-600">Terminal Value</span>
-                    <span className="font-semibold">${dcfResults.tvExitMultiple.toFixed(1)}M</span>
+                    <span className="font-semibold font-mono">{formatCurrency(dcfResults.tvExitMultiple, 1)}M</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Discount Factor (Year 5)</span>
@@ -1096,33 +1174,33 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">PV of Terminal Value</span>
-                    <span className="font-semibold">${dcfResults.pvTVExitMultiple.toFixed(1)}M</span>
+                    <span className="font-semibold font-mono">{formatCurrency(dcfResults.pvTVExitMultiple, 1)}M</span>
                   </div>
                   <div className="border-t pt-3 flex justify-between text-lg">
                     <span className="font-bold">Enterprise Value</span>
-                    <span className="font-bold text-blue-600">${dcfResults.evExitMultiple.toFixed(1)}M</span>
+                    <span className="font-bold text-blue-600 font-mono">{formatCurrency(dcfResults.evExitMultiple, 1)}M</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-bold">NPV per Share</span>
-                    <span className="font-bold text-green-600">${dcfResults.npvPerShareExitMultiple.toFixed(2)}</span>
+                    <span className="font-bold text-green-600 font-mono">{formatCurrency(dcfResults.npvPerShareExitMultiple, 2)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                 <h3 className="text-lg font-semibold mb-4">Terminal Value - Perpetuity Growth Method</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Terminal Year FCF</span>
-                    <span>${dcfResults.terminalProjection.fcf.toFixed(1)}M</span>
+                    <span className="font-mono">{formatCurrency(dcfResults.terminalProjection.fcf, 1)}M</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Perpetual Growth Rate</span>
-                    <span>{dcfAssumptions.terminalGrowth}%</span>
+                    <span className="font-semibold">{dcfAssumptions.terminalGrowth}%</span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
                     <span className="text-gray-600">Terminal Value</span>
-                    <span className="font-semibold">${dcfResults.tvPerpetuity.toFixed(1)}M</span>
+                    <span className="font-semibold font-mono">{formatCurrency(dcfResults.tvPerpetuity, 1)}M</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Discount Factor (Year 5)</span>
@@ -1130,22 +1208,22 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">PV of Terminal Value</span>
-                    <span className="font-semibold">${dcfResults.pvTVPerpetuity.toFixed(1)}M</span>
+                    <span className="font-semibold font-mono">{formatCurrency(dcfResults.pvTVPerpetuity, 1)}M</span>
                   </div>
                   <div className="border-t pt-3 flex justify-between text-lg">
                     <span className="font-bold">Enterprise Value</span>
-                    <span className="font-bold text-blue-600">${dcfResults.evPerpetuity.toFixed(1)}M</span>
+                    <span className="font-bold text-blue-600 font-mono">{formatCurrency(dcfResults.evPerpetuity, 1)}M</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-bold">NPV per Share</span>
-                    <span className="font-bold text-green-600">${dcfResults.npvPerSharePerpetuity.toFixed(2)}</span>
+                    <span className="font-bold text-green-600 font-mono">{formatCurrency(dcfResults.npvPerSharePerpetuity, 2)}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Sensitivity Analysis */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <h3 className="text-lg font-semibold mb-4">Sensitivity Analysis - NPV per Share</h3>
               <p className="text-sm text-gray-600 mb-4">Shows how valuation changes with different WACC and terminal growth assumptions</p>
               <div className="overflow-x-auto">
@@ -1165,8 +1243,8 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                       <tr key={wacc} className={wacc === dcfAssumptions.wacc ? 'bg-blue-100' : ''}>
                         <td className="p-2 font-medium">{wacc}%</td>
                         {sensitivityData[i].map((val, j) => (
-                          <td key={j} className={`p-2 text-center ${wacc === dcfAssumptions.wacc && j === 2 ? 'font-bold bg-blue-200' : ''}`}>
-                            ${val.toFixed(2)}
+                          <td key={j} className={`p-2 text-center font-mono ${wacc === dcfAssumptions.wacc && j === 2 ? 'font-bold bg-blue-200' : ''}`}>
+                            {formatCurrency(val, 2)}
                           </td>
                         ))}
                       </tr>
@@ -1177,24 +1255,24 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
             </div>
 
             {/* Valuation Summary */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-sm p-6 border-2 border-blue-200">
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-blue-300">
               <h3 className="text-xl font-bold mb-4">Valuation Summary</h3>
               <div className="grid grid-cols-3 gap-6 mb-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Current Market Price</p>
-                  <p className="text-2xl font-bold">${companyData.currentPrice.toFixed(2)}</p>
+                  <p className="text-2xl font-bold font-mono">{formatCurrency(companyData.currentPrice, 2)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-1">DCF Fair Value Range</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${Math.min(dcfResults.npvPerShareExitMultiple, dcfResults.npvPerSharePerpetuity).toFixed(2)} - 
-                    ${Math.max(dcfResults.npvPerShareExitMultiple, dcfResults.npvPerSharePerpetuity).toFixed(2)}
+                  <p className="text-2xl font-bold text-green-600 font-mono">
+                    {formatCurrency(Math.min(dcfResults.npvPerShareExitMultiple, dcfResults.npvPerSharePerpetuity), 2)} - 
+                    {formatCurrency(Math.max(dcfResults.npvPerShareExitMultiple, dcfResults.npvPerSharePerpetuity), 2)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Upside/Downside</p>
                   <p className={`text-2xl font-bold ${((dcfResults.npvPerShareExitMultiple + dcfResults.npvPerSharePerpetuity) / 2 - companyData.currentPrice) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {(((dcfResults.npvPerShareExitMultiple + dcfResults.npvPerSharePerpetuity) / 2 / companyData.currentPrice - 1) * 100).toFixed(1)}%
+                    {formatPercent(((dcfResults.npvPerShareExitMultiple + dcfResults.npvPerSharePerpetuity) / 2 / companyData.currentPrice - 1) * 100)}
                   </p>
                 </div>
               </div>
@@ -1214,7 +1292,7 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
         {/* Comps Analysis Tab */}
         {activeTab === 'comps' && companyData && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
               <h2 className="text-xl font-semibold mb-4">Comparable Companies Analysis</h2>
               
               <div className="mb-6">
@@ -1225,21 +1303,28 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     placeholder="Enter comp ticker (e.g., GOOGL, META)"
                     value={compTicker}
                     onChange={(e) => setCompTicker(e.target.value.toUpperCase())}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md"
                     onKeyPress={(e) => e.key === 'Enter' && addComparable()}
                   />
                   <button 
                     onClick={addComparable}
                     disabled={!compTicker || loading}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed font-medium shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none disabled:shadow-none"
                   >
-                    {loading ? 'Loading...' : 'Add Comparable'}
+                    {loading ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin inline mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Add Comparable'
+                    )}
                   </button>
                 </div>
               </div>
 
               {/* Trading Multiples Table */}
-              <div className="bg-gray-50 rounded-lg p-6">
+              <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                 <h3 className="font-semibold mb-4">Trading Multiples Comparison</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -1257,9 +1342,9 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                     <tbody className="divide-y">
                       <tr className="bg-blue-50 font-medium">
                         <td className="p-3">{companyData.name} (Target)</td>
-                        <td className="text-right p-3">${companyData.marketCap.toFixed(0)}</td>
-                        <td className="text-right p-3">${companyData.financials[companyData.financials.length - 1].revenue.toFixed(0)}</td>
-                        <td className="text-right p-3">${companyData.financials[companyData.financials.length - 1].ebitda.toFixed(0)}</td>
+                        <td className="text-right p-3 font-mono">{formatCurrency(companyData.marketCap, 0)}</td>
+                        <td className="text-right p-3 font-mono">{formatCurrency(companyData.financials[companyData.financials.length - 1].revenue, 0)}</td>
+                        <td className="text-right p-3 font-mono">{formatCurrency(companyData.financials[companyData.financials.length - 1].ebitda, 0)}</td>
                         <td className="text-right p-3">
                           {((companyData.marketCap + 500) / companyData.financials[companyData.financials.length - 1].revenue).toFixed(2)}x
                         </td>
@@ -1271,15 +1356,15 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                       {comps.map((comp, idx) => (
                         <tr key={idx} className="hover:bg-gray-50">
                           <td className="p-3">{comp.name}</td>
-                          <td className="text-right p-3">${comp.marketCap.toFixed(0)}</td>
-                          <td className="text-right p-3">${comp.revenue.toFixed(0)}</td>
-                          <td className="text-right p-3">${comp.ebitda.toFixed(0)}</td>
+                          <td className="text-right p-3 font-mono">{formatCurrency(comp.marketCap, 0)}</td>
+                          <td className="text-right p-3 font-mono">{formatCurrency(comp.revenue, 0)}</td>
+                          <td className="text-right p-3 font-mono">{formatCurrency(comp.ebitda, 0)}</td>
                           <td className="text-right p-3">{comp.evRevenue.toFixed(2)}x</td>
                           <td className="text-right p-3">{comp.evEbitda.toFixed(2)}x</td>
                           <td className="text-center p-3">
                             <button
                               onClick={() => setComps(comps.filter((_, i) => i !== idx))}
-                              className="text-red-600 hover:text-red-800 text-xs"
+                              className="px-3 py-1 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 rounded-md transition-all duration-200"
                             >
                               Remove
                             </button>
@@ -1317,16 +1402,16 @@ Be concise but insightful. Focus on actionable insights for M&A evaluation.`
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-600">EV/Revenue Multiple:</span>
-                      <span className="ml-2 font-semibold">
-                        ${((comps.reduce((sum, c) => sum + c.evRevenue, 0) / comps.length) * 
-                          companyData.financials[companyData.financials.length - 1].revenue).toFixed(0)}M
+                      <span className="ml-2 font-semibold font-mono">
+                        {formatCurrency(((comps.reduce((sum, c) => sum + c.evRevenue, 0) / comps.length) * 
+                          companyData.financials[companyData.financials.length - 1].revenue), 0)}M
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-600">EV/EBITDA Multiple:</span>
-                      <span className="ml-2 font-semibold">
-                        ${((comps.reduce((sum, c) => sum + c.evEbitda, 0) / comps.length) * 
-                          companyData.financials[companyData.financials.length - 1].ebitda).toFixed(0)}M
+                      <span className="ml-2 font-semibold font-mono">
+                        {formatCurrency(((comps.reduce((sum, c) => sum + c.evEbitda, 0) / comps.length) * 
+                          companyData.financials[companyData.financials.length - 1].ebitda), 0)}M
                       </span>
                     </div>
                   </div>
